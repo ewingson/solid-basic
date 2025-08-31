@@ -1,2 +1,2 @@
 # solid-basic
-r/w (CRUD)
+trying some very basic CRUD-operations
