@@ -5,6 +5,7 @@
 let SOLID_OIDC_ISSUER = "";
 const FOAF_NAME_PREDICATE = "http://xmlns.com/foaf/0.1/name";
 const VC_FN_PREDICATE = "http://www.w3.org/2006/vcard/ns#fn";
+const PREF_PREDICATE = "http://www.w3.org/ns/pim/space#preferencesFile";
 const PUB_TI_PREDICATE = "http://www.w3.org/ns/solid/terms#publicTypeIndex";
 const PRIV_TI_PREDICATE = "http://www.w3.org/ns/solid/terms#privateTypeIndex";
 const PIMSTORAGE_PREDICATE = "http://www.w3.org/ns/pim/space#storage";
@@ -18,6 +19,7 @@ const logoutButton = document.getElementById('logout-button');
 const usernameSpan = document.getElementById('username');
 const webidSpan = document.getElementById('webid');
 const fnSpan = document.getElementById('fn');
+const prefSpan = document.getElementById('pref');
 const pubindexSpan = document.getElementById('pubind');
 const privindexSpan = document.getElementById('privind');
 const storageSpan = document.getElementById('root');
@@ -48,10 +50,11 @@ async function main() {
         const fname = await secondFetch(session.info.webId);
         // show fn in console
         console.log(fname);
+        const preferences = await preferencesFetch(session.info.webId);
         const pubti = await pubIFetch(session.info.webId);
         const privti = await privIFetch(session.info.webId);
         const pims = await rootstorageFetch(session.info.webId);
-        updateUI(true, user.name, webid, fname, pubti, privti, pims);
+        updateUI(true, user.name, webid, fname, preferences, pubti, privti, pims);
 
     } catch (error) {
         alert(error.message);
@@ -103,6 +106,16 @@ async function secondFetch(webId) {
 
     // It returns the found vcard:fn value, or a default string if not found.
     return fnQuad?.object.value || 'not set';
+}
+
+async function preferencesFetch(webId) {
+    // This function uses the `readSolidDocument` helper below.
+    const profileQuads = await readSolidDocument(webId);
+
+	const prefQuad = profileQuads.find(quad => quad.predicate.value === PREF_PREDICATE);
+
+    // It returns the found preferences value, or a default string if not found.
+    return prefQuad?.object.value || 'hmm, not found';
 }
 
 async function pubIFetch(webId) {
@@ -158,7 +171,7 @@ async function readSolidDocument(url) {
  * @param {boolean} isLoggedIn - Whether the user is logged in.
  * @param {string} [name] - The user's name, if logged in.
  */
-function updateUI(isLoggedIn, name, webidname, fName, pubTI, privTI, pimS) {
+function updateUI(isLoggedIn, name, webidname, fName, preF, pubTI, privTI, pimS) {
     loadingDiv.setAttribute('hidden', ''); // Hide loading message
 
     if (isLoggedIn) {
@@ -169,6 +182,7 @@ function updateUI(isLoggedIn, name, webidname, fName, pubTI, privTI, pimS) {
         usernameSpan.textContent = name;
         webidSpan.textContent = webidname;
         fnSpan.textContent = fName;
+        prefSpan.textContent = preF;
         pubindexSpan.textContent = pubTI;
         privindexSpan.textContent = privTI;
         storageSpan.textContent = pimS;
